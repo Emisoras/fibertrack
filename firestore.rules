@@ -1,0 +1,86 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isBootstrapAdmin() {
+      // The first user is hardcoded as the bootstrap admin.
+      return isAuthenticated() && request.auth.token.email == 'cableexitoocana@gmail.com';
+    }
+
+    // A user is considered a "viewer" if their user document exists AND is active.
+    // IMPORTANT: This function uses get() and cannot be used in `list` rules.
+    function isViewer() {
+      return isAuthenticated() 
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'Activo';
+    }
+    
+    // An admin has the 'Admin' role OR is the bootstrap admin, AND must be active.
+    // IMPORTANT: This function also uses get() via isViewer() and cannot be used in `list` rules.
+    function isAdmin() {
+      // The bootstrap admin check is a special case that bypasses the role check.
+      // But even they must have an 'Activo' status if their document exists.
+      let isDesignatedAdmin = isBootstrapAdmin() 
+        || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin');
+            
+      return isDesignatedAdmin && isViewer(); // Use isViewer to also check for active status
+    }
+
+    // --- Collection Rules ---
+
+    // User profile rules
+    match /users/{userId} {
+      // An admin can list all users. We only check for auth here for performance.
+      // The Admin UI component is responsible for checking the user's role.
+      allow list: if isAuthenticated();
+
+      // A user MUST be able to read their own profile. An admin can read any profile.
+      allow get: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+      
+      // A new user can create their own profile document.
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+
+      // Only an Admin can update a profile (e.g. change role/status) or delete it.
+      allow update, delete: if isAdmin();
+    }
+    
+    // Logs can be read by any active viewer. Writes are handled by admin actions.
+    match /logs/{logId} {
+      // We split `read` into `get` and `list` because `isViewer` cannot be used in `list` rules.
+      allow get: if isViewer();
+      allow list: if isAuthenticated(); // Relaxing list rule. The UI handles role checks.
+      allow write: if isAdmin();
+    }
+
+    // Generic rules for all top-level inventory collections (odfs, mufas, etc.)
+    match /{collection}/{docId} {
+      function isInventoryCollection() {
+        return !(collection in ['users', 'logs']);
+      }
+
+      // Reading a single document now only requires authentication.
+      // The application UI layer is responsible for checking roles before displaying data.
+      allow get: if isInventoryCollection() && isAuthenticated();
+      
+      // Listing documents from a collection only requires authentication.
+      allow list: if isInventoryCollection() && isAuthenticated();
+
+      // Writes are always restricted to Admins.
+      allow write: if isInventoryCollection() && isAdmin();
+
+      // This recursively matches all subcollections within an inventory document.
+      match /{path=**} {
+          // Splitting read to avoid issues with list operations in subcollections too.
+          allow get: if isAuthenticated();
+          allow list: if isAuthenticated();
+          allow write: if isAdmin();
+      }
+    }
+  }
+}

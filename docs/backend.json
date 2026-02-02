@@ -1,0 +1,525 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "type": "object",
+      "description": "Represents a user's profile and role in the system.",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Admin", "Viewer"],
+          "description": "The user's role in the system."
+        },
+        "status": {
+            "type": "string",
+            "enum": ["Activo", "Inactivo"],
+            "description": "The status of the user account."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the user profile was created."
+        }
+      },
+      "required": ["email", "role", "createdAt", "status"]
+    },
+    "Odf": {
+      "title": "Odf",
+      "type": "object",
+      "description": "Represents an Optical Distribution Frame in the network.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the ODF."
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of fiber connections in the ODF."
+        },
+        "tipo": {
+          "type": "string",
+          "enum": ["Odf"]
+        },
+        "estado": {
+          "type": "string"
+        },
+        "fechaCreacion": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "address": {
+          "type": "string",
+          "description": "Physical address of the ODF."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Latitude coordinate of the ODF location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude coordinate of the ODF location."
+        },
+        "mapPosition": {
+          "type": "object",
+          "properties": {
+            "top": { "type": "string" },
+            "left": { "type": "string" }
+          }
+        }
+      },
+      "required": ["name", "capacity", "tipo", "estado", "fechaCreacion", "address", "latitude", "longitude"]
+    },
+    "OdfPosition": {
+      "title": "ODF Position",
+      "type": "object",
+      "description": "Represents a single port or position within an ODF.",
+      "properties": {
+        "positionNumber": {
+          "type": "number",
+          "description": "The number of the position in the ODF."
+        },
+        "color": {
+          "type": "string",
+          "description": "The color of the fiber connector according to standard."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Libre", "Ocupado", "Reservado", "Dañado"],
+          "description": "The status of the port."
+        },
+        "serviceName": {
+          "type": "string"
+        },
+        "fiberId": {
+          "type": "string",
+          "description": "Reference to the Fiber connected to this position."
+        },
+        "fiberTrunkId": {
+            "type": "string"
+        },
+        "fiberThreadNumber": {
+            "type": "number"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Description of the destination this position is connected to."
+        },
+        "destinationLabel": {
+            "type": "string"
+        }
+      },
+      "required": ["positionNumber", "color", "status"]
+    },
+    "Mufla": {
+      "title": "Mufla",
+      "type": "object",
+      "description": "Represents a fiber optic splice closure (mufla).",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the Mufla."
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of fiber connections in the Mufla."
+        },
+         "tipo": {
+          "type": "string",
+          "enum": ["Mufla"]
+        },
+        "estado": {
+          "type": "string"
+        },
+        "fechaCreacion": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "address": {
+          "type": "string",
+          "description": "Physical address of the Mufla."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Latitude coordinate of the Mufla location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude coordinate of the Mufla location."
+        },
+        "mapPosition": {
+          "type": "object",
+          "properties": {
+            "top": { "type": "string" },
+            "left": { "type": "string" }
+          }
+        }
+      },
+      "required": ["name", "capacity", "tipo", "estado", "fechaCreacion", "address", "latitude", "longitude"]
+    },
+    "MuflaSplice": {
+      "title": "Mufla Splice",
+      "type": "object",
+      "description": "Represents a single fiber splice within a Mufla or a NAP Box.",
+      "properties": {
+        "trayNumber": {
+          "type": "number",
+          "description": "The splice tray number."
+        },
+        "spliceNumber": {
+          "type": "number",
+          "description": "The splice number within the tray."
+        },
+        "inFiberId": {
+          "type": "string",
+          "description": "ID of the incoming fiber trunk."
+        },
+        "inFiberThread": {
+          "type": "number",
+          "description": "Thread number of the incoming fiber."
+        },
+        "outFiberId": {
+          "type": "string",
+          "description": "ID of the outgoing fiber trunk."
+        },
+        "outFiberThread": {
+          "type": "number",
+          "description": "Thread number of the outgoing fiber."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about the splice."
+        }
+      },
+      "required": ["trayNumber", "spliceNumber", "inFiberId", "inFiberThread", "outFiberId", "outFiberThread"]
+    },
+    "CajaNap": {
+      "title": "CajaNap",
+      "type": "object",
+      "description": "Represents a Network Access Point (NAP) box.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the NAP box."
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of fiber connections in the NAP box."
+        },
+        "tipo": {
+            "type": "string",
+            "enum": ["CajaNap"]
+        },
+        "estado": {
+            "type": "string"
+        },
+        "fechaCreacion": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "address": {
+          "type": "string",
+          "description": "Physical address of the NAP box."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Latitude coordinate of the NAP box location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude coordinate of the NAP box location."
+        },
+        "functionType": {
+          "type": "string",
+          "enum": ["De Paso", "Terminal", "Terminal (Cliente) + De Paso"],
+          "description": "The function of the NAP box in the network."
+        },
+        "mapPosition": {
+          "type": "object",
+          "properties": {
+            "top": { "type": "string" },
+            "left": { "type": "string" }
+          }
+        },
+        "inFiberId": {
+          "type": "string",
+          "description": "ID of the incoming fiber trunk."
+        },
+        "inFiberThread": {
+          "type": "number",
+          "description": "Thread number of the incoming fiber."
+        }
+      },
+      "required": ["name", "capacity", "tipo", "estado", "fechaCreacion", "address", "latitude", "longitude", "functionType"]
+    },
+    "CajaNapPort": {
+      "title": "Caja NAP Port",
+      "type": "object",
+      "description": "Represents a single client port in a NAP box.",
+      "properties": {
+        "portNumber": {
+          "type": "number",
+          "description": "The number of the client port."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Libre", "Ocupado", "Reservado", "Dañado"],
+          "description": "The status of the port."
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "The name of the service or client on this port."
+        },
+        "outputPower": {
+          "type": "number",
+          "description": "Output power level in dBm at the port."
+        }
+      },
+      "required": ["portNumber", "status"]
+    },
+    "Splitter": {
+      "title": "Splitter",
+      "type": "object",
+      "description": "Represents a fiber optic splitter.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the splitter."
+        },
+        "splittingRatio": {
+          "type": "string",
+          "description": "Splitting ratio of the splitter (e.g., 1:8, 1:16)."
+        },
+        "muflaId": {
+          "type": "string",
+          "description": "ID of the Mufla this splitter is located in."
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of fiber connections in the splitter."
+        },
+        "tipo": {
+          "type": "string",
+          "enum": ["Splitter"]
+        },
+        "estado": {
+          "type": "string"
+        },
+        "fechaCreacion": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "address": {
+          "type": "string",
+          "description": "Physical address of the splitter."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Latitude coordinate of the splitter location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude coordinate of the splitter location."
+        },
+        "mapPosition": {
+          "type": "object",
+          "properties": {
+            "top": { "type": "string" },
+            "left": { "type": "string" }
+          }
+        },
+        "inFiberId": {
+          "type": "string",
+          "description": "ID of the incoming fiber trunk."
+        },
+        "inFiberThread": {
+          "type": "number",
+          "description": "Thread number of the incoming fiber."
+        }
+      },
+      "required": ["name", "splittingRatio", "muflaId", "capacity", "tipo", "estado", "fechaCreacion", "address", "latitude", "longitude"]
+    },
+    "SplitterOutput": {
+      "title": "Splitter Output",
+      "type": "object",
+      "description": "Represents a single output port on a splitter.",
+      "properties": {
+        "outputNumber": {
+          "type": "number",
+          "description": "The number of the output port on the splitter."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Libre", "Ocupado", "Reservado", "Dañado"],
+          "description": "The status of the port."
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "The name of the service or client on this port."
+        },
+        "fiberId": {
+          "type": "string",
+          "description": "Reference to the Fiber connected to this output."
+        },
+        "fiberTrunkId": {
+            "type": "string"
+        },
+        "fiberThreadNumber": {
+            "type": "number"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Description of the destination this output is connected to."
+        },
+        "destinationLabel": {
+            "type": "string"
+        }
+      },
+      "required": ["outputNumber", "status"]
+    },
+    "Fiber": {
+      "title": "Fiber",
+      "type": "object",
+      "description": "Represents a fiber optic cable segment between two points in the network.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the fiber segment."
+        },
+        "originId": {
+          "type": "string",
+          "description": "ID of the origin network element."
+        },
+        "originType": {
+          "type": "string",
+          "enum": ["Odf", "Mufla", "CajaNap", "Splitter"],
+          "description": "Type of the origin network element."
+        },
+        "destinationId": {
+          "type": "string",
+          "description": "ID of the destination network element."
+        },
+        "destinationType": {
+          "type": "string",
+          "enum": ["Odf", "Mufla", "CajaNap", "Splitter"],
+          "description": "Type of the destination network element."
+        },
+        "distance": {
+          "type": "number",
+          "description": "Length of the fiber segment in meters."
+        },
+        "threadCount": {
+          "type": "number",
+          "description": "Number of threads in the fiber cable."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["troncal", "secundaria"],
+          "description": "Type of fiber segment."
+        },
+        "estado": {
+          "type": "string",
+          "enum": ["Activo", "Inactivo", "Corte"],
+          "description": "The status of the fiber segment."
+        },
+        "fechaCreacion": {
+            "type": "string",
+            "format": "date-time"
+        }
+      },
+      "required": ["name", "originId", "originType", "destinationId", "destinationType", "distance", "threadCount", "type", "estado", "fechaCreacion"]
+    },
+    "Log": {
+      "title": "Log",
+      "type": "object",
+      "description": "Represents an audit log entry for a change in the system.",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "user": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "elementName": {
+          "type": "string"
+        },
+        "elementType": {
+          "type": "string"
+        },
+        "details": {
+          "type": "string"
+        }
+      },
+      "required": ["timestamp", "user", "action", "elementId", "elementType", "details"]
+    }
+  },
+  "auth": {
+    "providers": ["password", "anonymous"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores user profile information, including their role."
+    },
+    "/odfs/{odfId}": {
+      "schema": { "$ref": "#/entities/Odf" },
+      "description": "Stores ODF (Optical Distribution Frame) entities."
+    },
+    "/odfs/{odfId}/positions/{positionId}": {
+      "schema": { "$ref": "#/entities/OdfPosition" },
+      "description": "Stores the individual port/position details for a specific ODF."
+    },
+    "/muflas/{muflaId}": {
+      "schema": { "$ref": "#/entities/Mufla" },
+      "description": "Stores Mufla (fiber optic splice closure) entities."
+    },
+    "/muflas/{muflaId}/splices/{spliceId}": {
+      "schema": { "$ref": "#/entities/MuflaSplice" },
+      "description": "Stores individual fiber splices for a specific Mufla."
+    },
+    "/cajas_nap/{cajaNapId}": {
+      "schema": { "$ref": "#/entities/CajaNap" },
+      "description": "Stores CajaNap (Network Access Point box) entities."
+    },
+    "/cajas_nap/{cajaNapId}/ports/{portId}": {
+      "schema": { "$ref": "#/entities/CajaNapPort" },
+      "description": "Stores the individual client port details for a specific NAP box."
+    },
+    "/cajas_nap/{cajaNapId}/splices/{spliceId}": {
+      "schema": { "$ref": "#/entities/MuflaSplice" },
+      "description": "Stores individual fiber splices for a specific NAP box."
+    },
+    "/splitters/{splitterId}": {
+      "schema": { "$ref": "#/entities/Splitter" },
+      "description": "Stores Splitter entities."
+    },
+    "/splitters/{splitterId}/outputs/{outputId}": {
+      "schema": { "$ref": "#/entities/SplitterOutput" },
+      "description": "Stores the individual output port details for a specific Splitter."
+    },
+    "/fibers/{fiberId}": {
+      "schema": { "$ref": "#/entities/Fiber" },
+      "description": "Stores Fiber entities."
+    },
+    "/logs/{logId}": {
+      "schema": { "$ref": "#/entities/Log" },
+      "description": "Stores audit log entries for all changes in the network inventory."
+    }
+  }
+}
