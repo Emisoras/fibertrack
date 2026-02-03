@@ -7,7 +7,11 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'FiberTrack',
   description: 'Gestión de inventario de red para ISPs',
-  icons: [],
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({
