@@ -3,8 +3,8 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, getDocs, doc, getDoc, setDoc, query, limit, collection, onSnapshot } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signOut } from 'firebase/auth';
+import { Firestore, getDoc, doc, setDoc } from 'firebase/firestore';
+import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 import type { UserProfile } from '@/lib/types';
 
@@ -95,77 +95,52 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       auth,
       async (firebaseUser) => {
         if (firebaseUser) {
-          const isBootstrapAdmin = firebaseUser.email === 'cableexitoocana@gmail.com';
+          // User is signed in. Start loading their profile data.
+          setUserAuthState(prevState => ({ ...prevState, user: firebaseUser, isUserLoading: false, isRoleLoading: true }));
           
-          // Set user and start loading role. For the bootstrap admin, we can preemptively set the role.
-          setUserAuthState(prevState => ({ 
-              ...prevState, 
-              user: firebaseUser, 
-              isUserLoading: false, 
-              isRoleLoading: !isBootstrapAdmin, // Role is not loading if we are the admin
-              role: isBootstrapAdmin ? 'Admin' : null,
-              status: isBootstrapAdmin ? 'Activo' : null
-          }));
-
           const userRef = doc(firestore, 'users', firebaseUser.uid);
           
-          // Set up a listener for the user's profile document
-          const roleUnsubscribe = onSnapshot(userRef, async (userDoc) => {
-             if (userDoc.exists()) {
-                const userData = userDoc.data() as UserProfile;
-                
-                // For non-admin users, set their role from the DB.
-                // For the admin, we just update the status.
-                const finalRole = isBootstrapAdmin ? 'Admin' : (userData?.role || 'Viewer');
+          try {
+            const userDoc = await getDoc(userRef);
 
-                setUserAuthState(prevState => ({ 
-                    ...prevState, 
-                    role: finalRole, 
-                    status: userData.status, 
-                    isRoleLoading: false 
-                }));
+            if (userDoc.exists()) {
+              // User profile exists, read role and status from it.
+              const userData = userDoc.data() as UserProfile;
+              setUserAuthState(prevState => ({
+                ...prevState,
+                role: userData.role,
+                status: userData.status,
+                isRoleLoading: false,
+              }));
+            } else {
+              // This is a new user, their profile does not exist yet. Create it now.
+              const isBootstrapAdmin = firebaseUser.email === 'cableexitoocana@gmail.com';
+              
+              const newUserProfile: Omit<UserProfile, 'id'> = {
+                email: firebaseUser.email!,
+                role: isBootstrapAdmin ? 'Admin' : 'Viewer',
+                status: isBootstrapAdmin ? 'Activo' : 'Inactivo', // New users are inactive by default, except for the admin.
+                createdAt: new Date().toISOString(),
+                displayName: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
+              };
+              
+              await setDoc(userRef, newUserProfile);
 
-                // Self-correcting logic for the bootstrap admin's document in Firestore.
-                if (isBootstrapAdmin && (userData?.role !== 'Admin' || userData?.status !== 'Activo')) {
-                    setDoc(userRef, { role: 'Admin', status: 'Activo' }, { merge: true }).catch(err => {
-                        console.error("Failed to self-correct admin role/status:", err);
-                    });
-                }
-
-             } else {
-                // New user document needs to be created.
-                const newUserProfile: Omit<UserProfile, 'id'> = {
-                  email: firebaseUser.email!,
-                  role: isBootstrapAdmin ? 'Admin' : 'Viewer',
-                  status: isBootstrapAdmin ? 'Activo' : 'Inactivo', // New users are inactive by default
-                  createdAt: new Date().toISOString(),
-                  displayName: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
-                };
-
-                try {
-                  await setDoc(userRef, newUserProfile);
-                   // After creating, the local state is already likely correct from the initial check,
-                   // but we set it again to be sure.
-                   setUserAuthState(prevState => ({
-                      ...prevState,
-                      role: newUserProfile.role,
-                      status: newUserProfile.status,
-                      isRoleLoading: false,
-                  }));
-                } catch (e) {
-                  console.error("Error creating user profile:", e);
-                  setUserAuthState(prevState => ({ ...prevState, userError: e as Error, isRoleLoading: false }));
-                }
-             }
-          }, (error) => {
-            console.error("Error listening to user profile:", error);
-            setUserAuthState(prevState => ({ ...prevState, userError: error, isRoleLoading: false }));
-          });
-
-          return () => roleUnsubscribe();
+              // After creating the document, set the user's role and status in the app state.
+              setUserAuthState(prevState => ({
+                ...prevState,
+                role: newUserProfile.role,
+                status: newUserProfile.status,
+                isRoleLoading: false,
+              }));
+            }
+          } catch (error) {
+            console.error("Error getting or creating user profile:", error);
+            setUserAuthState(prevState => ({ ...prevState, userError: error as Error, isRoleLoading: false }));
+          }
 
         } else {
-          // User is signed out
+          // User is signed out, clear all user-related state.
           setUserAuthState({ user: null, isUserLoading: false, userError: null, role: null, isRoleLoading: false, status: null });
         }
       },
@@ -174,7 +149,9 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         setUserAuthState({ user: null, isUserLoading: false, userError: error, role: null, isRoleLoading: false, status: null });
       }
     );
-    return () => unsubscribe(); // Cleanup on unmount
+
+    // Cleanup the listener when the component unmounts
+    return () => unsubscribe();
   }, [auth, firestore]);
 
   // Memoize the context value
